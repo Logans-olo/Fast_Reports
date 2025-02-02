@@ -3,13 +3,15 @@ import pandas as pd
 from docx import Document
 from sqlalchemy import create_engine
 import sqlite3
+engine = create_engine('sqlite:///OBHR.db')
+#Spring 2025 OBHR 33000-008 LEC
 def main(): 
     name = input("What is your name: ")
     document = doc_init(name)
     document.save(name + ".docx")
     
-    db_init()
-    
+    table_name = db_init()
+    db_query(table_name, 'Sections', '\"Spring 2025 OBHR 33000-008 LEC\"')
     
 def doc_init(name):
     print(name)
@@ -30,21 +32,32 @@ def doc_init(name):
     )
     return document
 
-def db_init(): 
+def  db_init(): 
+    
+    print ("connection established to the database")
+    pathname = input("What is the name of the csv")
+    #Reading from the CSV and establishing a new table
+    df = pd.read_csv(pathname + '.csv')
+    print(' we did this')
+    
+    
+    df.to_sql('OBHR', con = engine, if_exists='replace', index=False)
+    
+    return pathname
+
+
+def db_query(table_name, table_column, where): 
     connection = sqlite3.connect("OBHR.db") # Using a SQL database that is going to insert from the connected CSV
     crsr = connection.cursor()
-    print ("connection established to the database")
-    #Reading from the CSV and establishing a new table
-    df = pd.read_csv('OBHR330-2025Spring_T1Survey_0_deidentified.csv', nrows=3)
-    print(' we did this')
-    engine = create_engine('sqlite:///OBHR.db')
+    sql_command = """
+    SELECT * FROM OBHR """  + """ WHERE """ + table_column + """ = """ + where + """ ;
+    """
+    print(sql_command)
+    crsr.execute(sql_command)
+    data = crsr.fetchall()
+    # for i in data:
+    #     print(i)
+    df = pd.read_sql(data, con = engine)
     print(df)
-    df.to_sql('OBHR', con = engine, if_exists='replace', index=False)
-    # sql_command = """"" 
-    # CREATE TABLE
-    # """
-        
-        
-        
 if __name__ == "__main__":
     main()
