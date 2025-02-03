@@ -8,11 +8,21 @@ engine = create_engine('sqlite:///OBHR.db')
 def main(): 
     name = input("What is your name: ")
     document = doc_init(name)
-    document.save(name + ".docx")
-    
     table_name = db_init()
-    db_query(table_name, 'Sections', '\"Spring 2025 OBHR 33000-008 LEC\"')
-    
+    data = db_query(table_name, 'Sections', '\"Spring 2025 OBHR 33000-008 LEC\"')
+    print(len(data))
+    print(len(data[0]))
+    table = document.add_table(len(data), 3)
+    table.style = 'Colorful List'
+    i = 0
+    j = 0
+    for row in data: 
+        for column in range(1,4):
+            cell = table.cell(i, j)
+            cell.text = str(row[j])
+            j = j + 1
+        i = i + 1
+    document.save(name + ".docx")
 def doc_init(name):
     print(name)
     document = Document()
@@ -30,6 +40,7 @@ def doc_init(name):
     document.add_paragraph(
         'first item in unordered list', style='List Bullet'
     )
+    
     return document
 
 def  db_init(): 
@@ -37,7 +48,7 @@ def  db_init():
     print ("connection established to the database")
     pathname = input("What is the name of the csv")
     #Reading from the CSV and establishing a new table
-    df = pd.read_csv(pathname + '.csv')
+    df = pd.read_csv(pathname + '.csv', nrows = 3)
     print(' we did this')
     
     
@@ -55,9 +66,11 @@ def db_query(table_name, table_column, where):
     print(sql_command)
     crsr.execute(sql_command)
     data = crsr.fetchall()
-    # for i in data:
-    #     print(i)
-    df = pd.read_sql(data, con = engine)
-    print(df)
+    for i in data:
+        print(i)
+        
+    return data
+    #df = pd.read_sql(data, con = engine)
+    #return df
 if __name__ == "__main__":
     main()
