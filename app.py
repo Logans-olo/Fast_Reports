@@ -1,24 +1,46 @@
 import sys
 from PySide6.QtCore import QUrl
-from PySide6.QtGui import QPixmap, QAction
+from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 from PySide6.QtPdf import QPdfDocument, QPdfPageRenderer
-
-
+from db import *
+students = ["Logan", "Jacob", "Nathan"]
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        width = 200
-        height = 200
+        width = 400
+        height = 500
         self.setWindowTitle("My App")
         self.window1 = AnotherWindow(" ")
         self.label = QLabel()
 
         self.input = QLineEdit()
+        toolbar = QToolBar("Main toolbar")
+        self.addToolBar(toolbar)
+        tool_action = QAction("Add student", self)
+        tool_action.triggered.connect(self.onMyToolBarButtonClick)
+        tool_action.setToolTip("This button does stuff")
+        
+        
+        add_action = QAction("Add table", self)
+        add_action.triggered.connect(lambda: db_init(""))
+        add_action.setToolTip("This button also does stuff")
         
         self.button = QPushButton("Generate New Window!")
         self.button.clicked.connect(lambda: self.label.setText(self.input.text()))
         self.button.clicked.connect(lambda: self.toggle_window1())
+        
+        #Start of the menu layout, which will be where all of the additional functionality will
+        #come from, such as adding students via a new window
+        #Or adding a new CSV to the database 
+        self.setStatusBar(QStatusBar(self))
+        menu = self.menuBar()
+        registry_menu = menu.addMenu("students")
+        database_menu = menu.addMenu("Databases")
+        database_menu.addAction(add_action)
+        registry_menu.addAction(tool_action)
+        
+        
         
         layout = QVBoxLayout()
         layout.addWidget(self.input)
@@ -39,6 +61,12 @@ class MainWindow(QMainWindow):
         context.addAction(QAction("test 3", self))
         context.exec(e.globalPos())
         
+    def onMyToolBarButtonClick(self, s): 
+        print(s)
+        dlg = QDialog(self)
+        dlg.setMinimumSize(250,250)
+        dlg.setWindowTitle("Add student")
+        dlg.exec()
     def toggle_window1(self):
         if self.window1.isVisible():
             self.window1.hide()
@@ -56,20 +84,27 @@ class AnotherWindow(QWidget):
         super().__init__()
 
         # Set up layout and label
-        layout = QVBoxLayout()
+        layout1 = QVBoxLayout()
+        layout2 = QHBoxLayout()
         self.label = QLabel("Another Window")
-        combobox = QComboBox()
-        combobox.addItems(["one", "two", "three"])
-        combobox.currentTextChanged.connect(self.text_changed)
-        layout.addWidget(self.label)
-        layout.addWidget(combobox)
+        self.combobox = QComboBox()
+        self.input = QLineEdit()
+        self.combobox.addItems(students)
+        self.button = QPushButton("Add student to registry")
+        self.button.clicked.connect(lambda: self.add_item_from_text(self.input.text()))
+        self.combobox.currentTextChanged.connect(self.text_changed)
+        layout1.addWidget(self.label)
+        layout1.addWidget(self.input)
+        layout2.addWidget(self.combobox)
+        layout2.addWidget(self.button)
+        layout1.addLayout(layout2)
 
         # self.graphics_view = QGraphicsView()
         # self.graphics_scene = QGraphicsScene(self)
         # self.graphics_view.setScene(self.graphics_scene)
         # layout.addWidget(self.graphics_view)
 
-        self.setLayout(layout)
+        self.setLayout(layout1)
 
         # Update label text with the passed value from MainWindow
         self.label.setText(text)
@@ -79,7 +114,9 @@ class AnotherWindow(QWidget):
     def text_changed(self,text): 
         print(text)
         
-        
+    def add_item_from_text(self, text):
+        self.combobox.addItem(text)
+        students.append(text)
     def load_pdf(self, pdf_path):
         # Load the PDF document
         self.pdf_document = QPdfDocument()
