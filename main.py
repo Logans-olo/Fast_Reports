@@ -1,13 +1,27 @@
 import numpy as np
+from tkinter import *
 import pandas as pd
 from docx import Document
 from sqlalchemy import create_engine
 import sqlite3
+from app import *
+
+
 engine = create_engine('sqlite:///OBHR.db')
+name = ""
+
+
+
 #Spring 2025 OBHR 33000-008 LEC
 def main(): 
-    name = input("What is your name: ")
-    document = doc_init(name)
+    document = doc_init()
+    app = QApplication()
+# Create a Qt widget, which will be our window.
+    window = MainWindow()
+    window.show()  # IMPORTANT!!!!! Windows are hidden by default.
+
+    # Start the event loop.
+    app.exec()
     table_name = db_init()
     data = db_query(table_name, 'Sections', '\"Spring 2025 OBHR 33000-008 LEC\"')
     print(len(data))
@@ -23,7 +37,10 @@ def main():
             j = j + 1
         i = i + 1
     document.save(name + ".docx")
-def doc_init(name):
+
+def doc_init():
+    
+    name = " "
     print(name)
     document = Document()
     document.add_heading
