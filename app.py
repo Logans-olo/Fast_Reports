@@ -12,13 +12,14 @@ class MainWindow(QMainWindow):
         height = 500
         self.setWindowTitle("My App")
         self.window1 = AnotherWindow(" ")
-        self.label = QLabel()
-
+        self.label = QLabel("Select The student from the Database")
         self.input = QLineEdit()
+        self.input2 = QLineEdit()
+        self.label2 = QLabel("Select the tabel you would like to query from")
         toolbar = QToolBar("Main toolbar")
-        self.addToolBar(toolbar)
+        # self.addToolBar(toolbar)
         tool_action = QAction("Add student", self)
-        tool_action.triggered.connect(self.onMyToolBarButtonClick)
+        tool_action.triggered.connect(self.toggle_window1)
         tool_action.setToolTip("This button does stuff")
         
         
@@ -28,7 +29,7 @@ class MainWindow(QMainWindow):
         
         self.button = QPushButton("Generate New Window!")
         self.button.clicked.connect(lambda: self.label.setText(self.input.text()))
-        self.button.clicked.connect(lambda: self.toggle_window1())
+        self.button.clicked.connect(lambda: self.toggle_result(self.input.text()))
         
         #Start of the menu layout, which will be where all of the additional functionality will
         #come from, such as adding students via a new window
@@ -43,8 +44,10 @@ class MainWindow(QMainWindow):
         
         
         layout = QVBoxLayout()
-        layout.addWidget(self.input)
         layout.addWidget(self.label)
+        layout.addWidget(self.input)
+        layout.addWidget(self.label2)
+        layout.addWidget(self.input2)
         layout.addWidget(self.button)
 
         container = QWidget()
@@ -72,7 +75,11 @@ class MainWindow(QMainWindow):
             self.window1.hide()
         else:
             self.window1.show()
-
+    def toggle_result(self, text): 
+        dlg = QueryResult(text)
+        dlg.setMinimumSize(250, 250)
+        dlg.setWindowTitle("Result of the query")
+        dlg.exec()
 
 class AnotherWindow(QWidget):
     """
@@ -140,3 +147,19 @@ class AnotherWindow(QWidget):
         # Optionally, adjust the view to fit the content
         self.graphics_view.setSceneRect(pixmap_item.boundingRect())
         self.graphics_view.fitInView(pixmap_item, 1)
+class QueryResult(QDialog): 
+    """
+    This "window" is a QDialog. It must be removed before the program is allowed to continue
+    """
+
+    def __init__(self, name):
+        super().__init__()
+
+        # Set up layout and label
+        layout1 = QVBoxLayout()
+        layout2 = QHBoxLayout()
+        self.label = QLabel()
+        self.label.setText(name)
+        layout1.addWidget(self.label)
+        self.setLayout(layout1)
+        
