@@ -4,7 +4,9 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 from PySide6.QtPdf import QPdfDocument, QPdfPageRenderer
 from db import *
-students = ["Logan", "Jacob", "Nathan"]
+students = []
+tables =[]
+csvs=[]
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -13,9 +15,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("My App")
         self.window1 = AnotherWindow(" ")
         self.label = QLabel("Select The student from the Database")
-        self.input = QLineEdit()
-        self.input2 = QLineEdit()
-        self.label2 = QLabel("Select the tabel you would like to query from")
+        self.stInput = QComboBox()
+        self.stInput.addItems(students)
+        self.tbInput = QComboBox()
+        self.numColumn = QSpinBox()
+        self.label2 = QLabel("Select the table you would like to query from/ Number of columns")
         toolbar = QToolBar("Main toolbar")
         # self.addToolBar(toolbar)
         tool_action = QAction("Add student", self)
@@ -24,12 +28,14 @@ class MainWindow(QMainWindow):
         
         
         add_action = QAction("Add table", self)
-        add_action.triggered.connect(lambda: db_init(""))
+        add_action.triggered.connect(self.toggle_window2)
         add_action.setToolTip("This button also does stuff")
         
+        export_action = QAction("Export tables", self)
+        import_action = QAction("Import tables", self)
+        
         self.button = QPushButton("Generate New Window!")
-        self.button.clicked.connect(lambda: self.label.setText(self.input.text()))
-        self.button.clicked.connect(lambda: self.toggle_result(self.input.text()))
+        self.button.clicked.connect(lambda: self.toggle_result())
         
         #Start of the menu layout, which will be where all of the additional functionality will
         #come from, such as adding students via a new window
@@ -38,16 +44,22 @@ class MainWindow(QMainWindow):
         menu = self.menuBar()
         registry_menu = menu.addMenu("students")
         database_menu = menu.addMenu("Databases")
+        file_menu = menu.addMenu("File")
         database_menu.addAction(add_action)
         registry_menu.addAction(tool_action)
+        file_menu.addAction(export_action)
+        file_menu.addAction(import_action)
         
         
         
         layout = QVBoxLayout()
+        layout2 = QHBoxLayout()
         layout.addWidget(self.label)
-        layout.addWidget(self.input)
+        layout.addWidget(self.stInput)
         layout.addWidget(self.label2)
-        layout.addWidget(self.input2)
+        layout2.addWidget(self.tbInput)
+        layout2.addWidget(self.numColumn)
+        layout.addLayout(layout2)
         layout.addWidget(self.button)
 
         container = QWidget()
@@ -68,20 +80,33 @@ class MainWindow(QMainWindow):
         print(s)
         dlg = QDialog(self)
         dlg.setMinimumSize(250,250)
-        dlg.setWindowTitle("Add student")
+        dlg.setWindowTitle("Add Table")
         dlg.exec()
     def toggle_window1(self):
-        if self.window1.isVisible():
-            self.window1.hide()
-        else:
-            self.window1.show()
-    def toggle_result(self, text): 
-        dlg = QueryResult(text)
+        # if self.window1.isVisible():
+        #     self.window1.hide()
+        # else:
+        #     self.window1.show()
+        dlg = AnotherWindow("")
         dlg.setMinimumSize(250, 250)
-        dlg.setWindowTitle("Result of the query")
+        dlg.setWindowTitle("Add student to database")
         dlg.exec()
+        self.stInput.addItem(students[len(students) -1 ])
+    def toggle_window2(self):
+        
+        dlg = tableAdd()
+        dlg.setMinimumSize(250, 250)
+        dlg.setWindowTitle("Add student to database")
+        dlg.exec()
+        self.tbInput.addItem(tables[len(tables) -1 ])
+    def toggle_result(self): 
+        self.w = QueryResult(self.tbInput.currentText())
+        if self.w.isVisible():
+            self.w.hide()
+        else: 
+            self.w.show()
 
-class AnotherWindow(QWidget):
+class AnotherWindow(QDialog):
     """
     This "window" is a QWidget. If it has no parent, it
     will appear as a free-floating window as we want.
@@ -114,7 +139,7 @@ class AnotherWindow(QWidget):
         self.setLayout(layout1)
 
         # Update label text with the passed value from MainWindow
-        self.label.setText(text)
+        # self.label.setText(text)
 
         # Load and render the PDF
         #self.load_pdf('Logan.pdf')  # Replace with the correct PDF path
@@ -147,19 +172,59 @@ class AnotherWindow(QWidget):
         # Optionally, adjust the view to fit the content
         self.graphics_view.setSceneRect(pixmap_item.boundingRect())
         self.graphics_view.fitInView(pixmap_item, 1)
-class QueryResult(QDialog): 
+class QueryResult(QMainWindow): 
     """
     This "window" is a QDialog. It must be removed before the program is allowed to continue
     """
-
-    def __init__(self, name):
+    
+    def __init__(self, table_name):
+        constraint = QWidget()
         super().__init__()
-
+        self.setMinimumSize(400,400)
         # Set up layout and label
         layout1 = QVBoxLayout()
+        headers = []
         layout2 = QHBoxLayout()
         self.label = QLabel()
-        self.label.setText(name)
+        self.combo = QComboBox()
+        self.label.setText(table_name)
         layout1.addWidget(self.label)
+        
+        data = db_column(table_name)
+        for row in data:
+            headers.append(row[1])
+        self.combo.addItems(headers)
+        layout1.addWidget(self.combo)
         self.setLayout(layout1)
+        constraint.setLayout(layout1)
+        self.setCentralWidget(constraint)
+class tableAdd(QDialog): 
+    def __init__(self):
+        
+        super().__init__()
+        layout1 = QVBoxLayout()
+        layout2 = QHBoxLayout()
+        self.label = QLabel("What is the name of the CSV to read from")
+        self.input = QLineEdit()
+        self.label2 = QLabel("What would you like to name this table")
+        self.input2 = QLineEdit()
+        self.button = QPushButton("Add to Database")
+        self.button.clicked.connect(lambda: self.add_item_from_text(self.input2.text(), self.input.text()))
+        self.combobox = QComboBox()
+        self.combobox.addItems(tables)
+        layout1.addWidget(self.label)
+        layout1.addWidget(self.input)
+        layout1.addWidget(self.label2)
+        layout1.addWidget(self.input2)
+        layout2.addWidget(self.combobox)
+        layout2.addWidget(self.button)
+        
+        layout1.addLayout(layout2)
+        self.setLayout(layout1)
+        
+    def add_item_from_text(self, table_name, pathname):
+        self.combobox.addItem(table_name)
+        tables.append(table_name)
+        csvs.append(pathname)
+        db_init(table_name, pathname)
         

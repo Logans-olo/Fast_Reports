@@ -15,10 +15,14 @@ def main():
 # Create a Qt widget, which will be our window.
     window = MainWindow()
     window.show()  # IMPORTANT!!!!! Windows are hidden by default.
-
-    # Start the event loop.
-    app.exec()
     
+    # Start the event loop.
+    tables = app.exec()
+    file = open("temp.txt", "a")
+    for db in app.py.tables:
+        file.write(db + "\n")
+        
+    file.close()
     # document.save(name + ".docx")
 
 def doc_init():
