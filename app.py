@@ -32,7 +32,11 @@ class MainWindow(QMainWindow):
         add_action.setToolTip("This button also does stuff")
         
         export_action = QAction("Export tables", self)
+        export_action.triggered.connect(self.export_table)
+        export_action.setToolTip("Export current tables to a file")
         import_action = QAction("Import tables", self)
+        import_action.triggered.connect(self.import_table)
+        import_action.setToolTip("Import tables from file")
         
         self.button = QPushButton("Generate New Window!")
         self.button.clicked.connect(lambda: self.toggle_result())
@@ -82,6 +86,24 @@ class MainWindow(QMainWindow):
         dlg.setMinimumSize(250,250)
         dlg.setWindowTitle("Add Table")
         dlg.exec()
+    def export_table(self):
+        file = open("database.txt", "w")
+        i = 0
+        for table in tables: 
+            file.write(table + " | " + csvs[i])
+            i = i + 1
+        file.close()
+    def import_table(self): 
+        file = open("database.txt", "r")
+        i = 0
+        for line in file:
+            s = line.split(' | ')
+            print(s[0])
+            print(s[1])
+            tables.append(s[0])
+            csvs.append(s[1])
+            self.tbInput.addItem(s[0])
+        file.close()
     def toggle_window1(self):
         # if self.window1.isVisible():
         #     self.window1.hide()

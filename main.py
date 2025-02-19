@@ -17,7 +17,7 @@ def main():
     window.show()  # IMPORTANT!!!!! Windows are hidden by default.
     
     # Start the event loop.
-    tables = app.exec()
+    app.exec()
     file = open("temp.txt", "a")
     for db in app.py.tables:
         file.write(db + "\n")
