@@ -122,7 +122,7 @@ class MainWindow(QMainWindow):
         dlg.exec()
         self.tbInput.addItem(tables[len(tables) -1 ])
     def toggle_result(self): 
-        self.w = QueryResult(self.tbInput.currentText())
+        self.w = QueryResult(self.stInput.currentText(), self.tbInput.currentText(), self.numColumn.value())
         if self.w.isVisible():
             self.w.hide()
         else: 
@@ -199,24 +199,32 @@ class QueryResult(QMainWindow):
     This "window" is a QDialog. It must be removed before the program is allowed to continue
     """
     
-    def __init__(self, table_name):
+    def __init__(self, student_name,  table_name, num_columns):
         constraint = QWidget()
         super().__init__()
         self.setMinimumSize(400,400)
+        print(num_columns)
         # Set up layout and label
         layout1 = QVBoxLayout()
         headers = []
-        layout2 = QHBoxLayout()
+        layout2 = []
         self.label = QLabel()
-        self.combo = QComboBox()
-        self.label.setText(table_name)
+        self.combo = []
+        self.label.setText(table_name + " " + student_name)
         layout1.addWidget(self.label)
         
         data = db_column(table_name)
         for row in data:
             headers.append(row[1])
-        self.combo.addItems(headers)
-        layout1.addWidget(self.combo)
+        for i in range(0, num_columns):
+            layout2.append(QHBoxLayout())
+            layout2[i].addWidget(QComboBox())
+            
+            self.combo.append(QComboBox())
+            self.combo[i].addItems(headers)
+            layout2[i].addWidget(self.combo[i])
+            layout2[i].addWidget(QCheckBox())
+            layout1.addLayout(layout2[i])
         self.setLayout(layout1)
         constraint.setLayout(layout1)
         self.setCentralWidget(constraint)

@@ -18,11 +18,7 @@ def main():
     
     # Start the event loop.
     app.exec()
-    file = open("temp.txt", "a")
-    for db in app.py.tables:
-        file.write(db + "\n")
-        
-    file.close()
+    
     # document.save(name + ".docx")
 
 def doc_init():
