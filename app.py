@@ -4,7 +4,9 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 from PySide6.QtPdf import QPdfDocument, QPdfPageRenderer
 from db import *
-students = []
+from doc import *
+students = ["Logan"]
+docs = []
 tables =[]
 csvs=[]
 class MainWindow(QMainWindow):
@@ -122,12 +124,15 @@ class MainWindow(QMainWindow):
         dlg.exec()
         self.tbInput.addItem(tables[len(tables) -1 ])
     def toggle_result(self): 
-        self.w = QueryResult(self.stInput.currentText(), self.tbInput.currentText(), self.numColumn.value())
+        if(not((self.stInput.currentText()) in docs)): 
+            docs.append(self.stInput.currentText())
+            doc_init(self.stInput.currentText())
+        self.w = QueryResult(self.tbInput.currentText(), self.numColumn.value(), self.stInput.currentText())
         if self.w.isVisible():
             self.w.hide()
         else: 
             self.w.show()
-
+        
 class AnotherWindow(QDialog):
     """
     This "window" is a QWidget. If it has no parent, it
@@ -199,23 +204,39 @@ class QueryResult(QMainWindow):
     This "window" is a QDialog. It must be removed before the program is allowed to continue
     """
     
-    def __init__(self, student_name,  table_name, num_columns):
+    def __init__(self,  table_name, num_columns, student_name):
         constraint = QWidget()
         super().__init__()
         self.setMinimumSize(400,400)
         print(num_columns)
         # Set up layout and label
         layout1 = QVBoxLayout()
+        self.label2 = QLabel("Enter the row and value to constrain by")
+        self.paraPrompt = QLineEdit()
+        self.docAdd = QPushButton("Query and add to document")
+        layout3 = QHBoxLayout()
+        layout3.addWidget(self.label2)
+        self.conRow = QLineEdit()
+        self.conCol = QComboBox()
+        
         headers = []
         layout2 = []
-        self.label = QLabel()
+        self.label = QLabel("Please enter constraints")
         self.combo = []
-        self.label.setText(table_name + " " + student_name)
-        layout1.addWidget(self.label)
+        # self.label.setText(table_name + " " + student_name)
+        self.label4 = QLabel("How would you like this to appear to the student: ")
         
         data = db_column(table_name)
         for row in data:
             headers.append(row[1])
+        self.conCol.addItems(headers)
+        layout3.addWidget(self.conCol)
+        layout3.addWidget(self.conRow)
+        layout1.addLayout(layout3)
+        layout1.addWidget(self.label4)
+        layout1.addWidget(self.paraPrompt)
+        layout1.addWidget(self.label)
+        
         for i in range(0, num_columns):
             layout2.append(QHBoxLayout())
             layout2[i].addWidget(QComboBox())
@@ -225,9 +246,26 @@ class QueryResult(QMainWindow):
             layout2[i].addWidget(self.combo[i])
             layout2[i].addWidget(QCheckBox())
             layout1.addLayout(layout2[i])
+        self.docAdd.pressed.connect(lambda: doc_add(self.paraPrompt.text(), student_name, self.combo,  self.conCol.currentText(), self.conRow.text()))
+        layout1.addWidget(self.docAdd)
         self.setLayout(layout1)
         constraint.setLayout(layout1)
         self.setCentralWidget(constraint)
+        
+        def doc_add(text, studentname, table_column_list, constraint_column, where): 
+            table_column = []
+            for table in table_column_list:
+                table_column.append(table.currentText())
+            
+            doc_add_heading(studentname + ".docx", self.conCol.currentText())
+            print("heading added")
+            doc_add_paragraph(studentname + ".docx", text)
+            print("paragraph added")
+            data = db_query(table_name, table_column, constraint_column, where)
+            doc_add_table(studentname + ".docx", data)
+            print("table addded")
+            
+            
 class tableAdd(QDialog): 
     def __init__(self):
         

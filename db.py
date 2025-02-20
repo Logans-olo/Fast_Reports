@@ -36,11 +36,15 @@ def db_column(table_name):
     crsr = connection.cursor()
     crsr.execute('PRAGMA table_info(' + table_name + ')')
     return crsr.fetchall()
-def db_query(table_name, table_column, where): 
+def db_query(table_name, table_column, constraint_column,  where): 
     connection = sqlite3.connect("OBHR.db") # Using a SQL database that is going to insert from the connected CSV
+    print(", ".join(table_column))
+    
     crsr = connection.cursor()
+    command = "\"" + where + "\""
+    print(command)
     sql_command = """
-    SELECT * FROM """ +  table_name    + """ WHERE """ + table_column + """ = """ + where + """ ;
+    SELECT """ + ", ".join(table_column) + """ FROM """ +  table_name    + """ WHERE """ + constraint_column + """ = """ + command + """ ;
     """
     print(sql_command)
     crsr.execute(sql_command)
@@ -49,5 +53,18 @@ def db_query(table_name, table_column, where):
         print(i)
         
     return data
-    #df = pd.read_sql(data, con = engine)
-    #return df
+# def db_query(table_name, table_column): 
+#     connection = sqlite3.connect("OBHR.db") # Using a SQL database that is going to insert from the connected CSV
+#     print
+#     crsr = connection.cursor()
+#     sql_command = """
+#     SELECT """ + table_column + """ FROM """ +  table_name
+#     print(sql_command)
+#     crsr.execute(sql_command)
+#     data = crsr.fetchall()
+#     for i in data:
+#         print(i)
+        
+#     return data
+#     #df = pd.read_sql(data, con = engine)
+#     #return df
