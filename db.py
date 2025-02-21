@@ -23,7 +23,7 @@ def db_init(table_name, pathname):
     print ("connection established to the database")
     # pathname = input("What is the name of the csv")
     #Reading from the CSV and establishing a new table
-    df = pd.read_csv(pathname + '.csv', nrows = 3)
+    df = pd.read_csv(pathname + '.csv')
     print(' we did this')
     
     
@@ -49,9 +49,7 @@ def db_query(table_name, table_column, constraint_column,  where):
     print(sql_command)
     crsr.execute(sql_command)
     data = crsr.fetchall()
-    for i in data:
-        print(i)
-        
+    print(data)
     return data
 # def db_query(table_name, table_column): 
 #     connection = sqlite3.connect("OBHR.db") # Using a SQL database that is going to insert from the connected CSV

@@ -106,6 +106,12 @@ class MainWindow(QMainWindow):
             csvs.append(s[1])
             self.tbInput.addItem(s[0])
         file.close()
+        i = 0
+        try:
+            for table in tables: 
+                db_init(table, csvs[i])
+        except Exception as e:
+            QMessageBox.critical(self, "Error Reading CSV", str(e))
     def toggle_window1(self):
         # if self.window1.isVisible():
         #     self.window1.hide()
@@ -120,7 +126,7 @@ class MainWindow(QMainWindow):
         
         dlg = tableAdd()
         dlg.setMinimumSize(250, 250)
-        dlg.setWindowTitle("Add student to database")
+        dlg.setWindowTitle("Add table to database")
         dlg.exec()
         self.tbInput.addItem(tables[len(tables) -1 ])
     def toggle_result(self): 
@@ -218,14 +224,17 @@ class QueryResult(QMainWindow):
         layout3.addWidget(self.label2)
         self.conRow = QLineEdit()
         self.conCol = QComboBox()
-        
+        self.operations = ["AVG", "MAX", "MIN", "PRINT"]
         headers = []
         layout2 = []
         self.label = QLabel("Please enter constraints")
         self.combo = []
+        self.oper = []
         # self.label.setText(table_name + " " + student_name)
         self.label4 = QLabel("How would you like this to appear to the student: ")
-        
+        self.rowName = QLineEdit()
+        self.layout4 = QHBoxLayout()
+        self.layout5 = QHBoxLayout()
         data = db_column(table_name)
         for row in data:
             headers.append(row[1])
@@ -233,13 +242,21 @@ class QueryResult(QMainWindow):
         layout3.addWidget(self.conCol)
         layout3.addWidget(self.conRow)
         layout1.addLayout(layout3)
+        self.layout4.addWidget(self.paraPrompt)
+        self.layout5.addWidget(QLabel("Paragraph Description"))
+        self.layout4.addWidget(self.rowName)
+        self.layout5.addWidget(QLabel("What is the name of the row"))
+        
         layout1.addWidget(self.label4)
-        layout1.addWidget(self.paraPrompt)
+        layout1.addLayout(self.layout5)
+        layout1.addLayout(self.layout4)
         layout1.addWidget(self.label)
         
         for i in range(0, num_columns):
             layout2.append(QHBoxLayout())
-            layout2[i].addWidget(QComboBox())
+            self.oper.append(QComboBox())
+            self.oper[i].addItems(self.operations)
+            layout2[i].addWidget(self.oper[i])
             
             self.combo.append(QComboBox())
             self.combo[i].addItems(headers)
@@ -257,12 +274,12 @@ class QueryResult(QMainWindow):
             for table in table_column_list:
                 table_column.append(table.currentText())
             
-            doc_add_heading(studentname + ".docx", self.conCol.currentText())
+            doc_add_heading(studentname + ".docx", self.rowName.text())
             print("heading added")
             doc_add_paragraph(studentname + ".docx", text)
             print("paragraph added")
             data = db_query(table_name, table_column, constraint_column, where)
-            doc_add_table(studentname + ".docx", data)
+            doc_add_table(studentname + ".docx",table_column, data)
             print("table addded")
             
             
@@ -294,5 +311,8 @@ class tableAdd(QDialog):
         self.combobox.addItem(table_name)
         tables.append(table_name)
         csvs.append(pathname)
-        db_init(table_name, pathname)
+        try:
+            db_init(table_name, pathname)
+        except Exception as e:
+            QMessageBox.critical(self, "Error Reading CSV", str(e))
         

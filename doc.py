@@ -17,7 +17,6 @@ def doc_add_paragraph(docName, text):
 def doc_add_table(docName, colNames, data):
     document = Document(docName)  # Open the existing document
     table = document.add_table(rows=1, cols=len(colNames))  # Create table with headers
-    
     # Add the header row
     hdr_cells = table.rows[0].cells
     for i, colName in enumerate(colNames):
