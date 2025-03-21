@@ -36,15 +36,30 @@ def db_column(table_name):
     crsr = connection.cursor()
     crsr.execute('PRAGMA table_info(' + table_name + ')')
     return crsr.fetchall()
-def db_query(table_name, table_column, constraint_column,  where): 
-    connection = sqlite3.connect("OBHR.db") # Using a SQL database that is going to insert from the connected CSV
-    print(", ".join(table_column))
-    
+def db_query(table_name, table_columns, constraint_column, where):
+    connection = sqlite3.connect("OBHR.db")
     crsr = connection.cursor()
     command = "\"" + where + "\""
-    print(command)
-    sql_command = """
-    SELECT """ + ", ".join(table_column) + """ FROM """ +  table_name    + """ WHERE """ + constraint_column + """ = """ + command + """ ;
+    
+    # Construct the SELECT clause based on the requested operations
+    select_clause = []
+    for column in table_columns:
+        if column.endswith("__AVG"):
+            column_name = column[:-5]  # Remove the suffix
+            select_clause.append(f"AVG({column_name}) AS {column}")
+        elif column.endswith("__MAX"):
+            column_name = column[:-5]  # Remove the suffix
+            select_clause.append(f"MAX({column_name}) AS {column}")
+        elif column.endswith("__MIN"):
+            column_name = column[:-5]  # Remove the suffix
+            select_clause.append(f"MIN({column_name}) AS {column}")
+        else:
+            select_clause.append(column)
+    
+    sql_command = f"""
+    SELECT {", ".join(select_clause)} 
+    FROM {table_name} 
+    WHERE {constraint_column} = {command};
     """
     print(sql_command)
     crsr.execute(sql_command)

@@ -5,6 +5,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtPdf import QPdfDocument, QPdfPageRenderer
 from db import *
 from doc import *
+import re
 students = ["Logan"]
 docs = []
 tables =[]
@@ -205,15 +206,11 @@ class AnotherWindow(QDialog):
         # Optionally, adjust the view to fit the content
         self.graphics_view.setSceneRect(pixmap_item.boundingRect())
         self.graphics_view.fitInView(pixmap_item, 1)
-class QueryResult(QMainWindow): 
-    """
-    This "window" is a QDialog. It must be removed before the program is allowed to continue
-    """
-    
-    def __init__(self,  table_name, num_columns, student_name):
+class QueryResult(QMainWindow):
+    def __init__(self, table_name, num_columns, student_name):
         constraint = QWidget()
         super().__init__()
-        self.setMinimumSize(400,400)
+        self.setMinimumSize(400, 400)
         print(num_columns)
         # Set up layout and label
         layout1 = QVBoxLayout()
@@ -230,7 +227,6 @@ class QueryResult(QMainWindow):
         self.label = QLabel("Please enter constraints")
         self.combo = []
         self.oper = []
-        # self.label.setText(table_name + " " + student_name)
         self.label4 = QLabel("How would you like this to appear to the student: ")
         self.rowName = QLineEdit()
         self.layout4 = QHBoxLayout()
@@ -263,25 +259,74 @@ class QueryResult(QMainWindow):
             layout2[i].addWidget(self.combo[i])
             layout2[i].addWidget(QCheckBox())
             layout1.addLayout(layout2[i])
-        self.docAdd.pressed.connect(lambda: doc_add(self.paraPrompt.text(), student_name, self.combo,  self.conCol.currentText(), self.conRow.text()))
+        
+        self.docAdd.pressed.connect(lambda: self.process_query(table_name, student_name))
         layout1.addWidget(self.docAdd)
         self.setLayout(layout1)
         constraint.setLayout(layout1)
         self.setCentralWidget(constraint)
-        
+
+    def process_query(self, table_name, student_name):
         def doc_add(text, studentname, table_column_list, constraint_column, where): 
-            table_column = []
-            for table in table_column_list:
-                table_column.append(table.currentText())
-            
-            doc_add_heading(studentname + ".docx", self.rowName.text())
-            print("heading added")
-            doc_add_paragraph(studentname + ".docx", text)
-            print("paragraph added")
-            data = db_query(table_name, table_column, constraint_column, where)
-            doc_add_table(studentname + ".docx",table_column, data)
-            print("table addded")
-            
+                table_column = []
+                for table in table_column_list:
+                    table_column.append(table.currentText())
+                    
+                doc_add_heading(studentname + ".docx", self.rowName.text())
+                print("heading added")
+                doc_add_paragraph(studentname + ".docx", text)
+                print("paragraph added")
+                data = db_query(table_name, table_column, constraint_column, where)
+                doc_add_table(studentname + ".docx",table_column, data)
+                print("table addded")
+        # Get the selected columns and operations
+        selected_columns = [combo.currentText() for combo in self.combo]
+        print (selected_columns)
+        selected_operations = [oper.currentText() for oper in self.oper]
+        print (selected_operations)
+        # Query the data
+        data = db_query(table_name, selected_columns, self.conCol.currentText(), self.conRow.text())
+        if (selected_operations[0] == 'PRINT'): 
+            doc_add(self.paraPrompt.text(), student_name, self.combo,  self.conCol.currentText(), self.conRow.text())
+        # Process the data based on the selected operations
+        else:
+            processed_data = []
+            for i, operation in enumerate(selected_operations):
+                column_name = selected_columns[i]
+                column_data = [row[i] for row in data if row[i] is not None]
+                
+            if operation == "AVG":
+                result = sum(column_data) / len(column_data) if column_data else 0
+                print (result)
+                selected_columns = f"{column_name[:3]}__AVG"
+                processed_data.append((selected_columns, result))
+                # elif operation == "MAX":
+                #     result = max(column_data) if column_data else 0
+                #     result_name = f"{column_name[:3]}__MAX"
+                #     processed_data.append((result_name, result))
+                # elif operation == "MIN":
+                #     result = min(column_data) if column_data else 0
+                #     result_name = f"{column_name[:3]}__MIN"
+                #     processed_data.append((result_name, result))
+                # else:  # PRINT
+                #     result_name = column_name
+                #     # For PRINT, add each row's value individually
+                # for value in column_data:
+                #     processed_data.append((result_name, value))
+                if (re.findall(r'AVG', ''.join([str(item) for item in processed_data]))):
+                    column_data = column_data[0]
+            print(processed_data)
+            # Add the processed data to the document
+            doc_add_paragraph(student_name + ".docx", self.paraPrompt.text())
+            # Extract column names and row data from processed_data
+            #column_names = list(set(x[0] for x in processed_data))  # Unique column names
+            # row_data = [[x[1] for x in processed_data if x[0] == col] for col in column_names]
+
+            # # Transpose row_data to match the table structure
+            # row_data = list(map(list, zip(*row_data)))
+
+            # Add the table to the document
+            doc_add_table(student_name + ".docx", selected_columns, column_data)
             
 class tableAdd(QDialog): 
     def __init__(self):

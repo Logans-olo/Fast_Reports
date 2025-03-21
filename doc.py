@@ -15,18 +15,26 @@ def doc_add_paragraph(docName, text):
 
 # Function to add a table to the document
 def doc_add_table(docName, colNames, data):
+    print(colNames)
     document = Document(docName)  # Open the existing document
     table = document.add_table(rows=1, cols=len(colNames))  # Create table with headers
     # Add the header row
     hdr_cells = table.rows[0].cells
-    for i, colName in enumerate(colNames):
-        hdr_cells[i].text = colName
-
+    if(isinstance(colNames, str)): 
+        hdr_cells[0].text = colNames
+    else: 
+        for i, colName in enumerate(colNames):
+            hdr_cells[i].text = colName
+    print(data)
     # Add data rows
-    for row_data in data:
+    if(not (isinstance(data, list ))): 
         row = table.add_row().cells
-        for i, value in enumerate(row_data):
-            row[i].text = str(value)
+        row[0].text = str(data)
+    else : 
+            for row_data in data:
+                row = table.add_row().cells
+            for i, value in enumerate(row_data):
+                row[i].text = str(value)
     
     document.save(docName)  # Save the updated document
 
